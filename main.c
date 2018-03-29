@@ -77,6 +77,16 @@ void		error(char *name, char *msg)
 	exit(1);
 }
 
+void		ft_print_info(t_window *w, t_image *i)
+{
+	mlx_put_image_to_window(w->mlx, w->win, i->img, i->pos_w, i->pos_h);
+	mlx_string_put(w->mlx, w->win, 50, 120, 0xFF00f0, "Arrows or WASD to move");
+	mlx_string_put(w->mlx, w->win, 50, 140, 0xFF0f00, "ZX to zoom");
+	mlx_string_put(w->mlx, w->win, 50, 160, 0xFFf000, "+/- or QE to height");
+	mlx_string_put(w->mlx, w->win, 50, 180, 0xFF0ff0, "ESC to quit");
+	mlx_string_put(w->mlx, w->win, 50, 200, 0xFFf00f, "R to reset");
+}
+
 void		ft_line(t_env *all, int x0, int y0)
 {
 	float	t;
@@ -149,7 +159,7 @@ void		ft_redraw(t_env *all, t_map *m, t_image *i, t_window *w)
 				ft_line(all, m->o2d[j][h - 1].x, m->o2d[j][h - 1].y);
 		}
 	}
-	mlx_put_image_to_window(w->mlx, w->win, i->img, i->pos_w, i->pos_h);
+	ft_print_info(w, i);
 }
 
 void	ft_key_size(int key, t_env *all)
@@ -163,6 +173,14 @@ void	ft_key_size(int key, t_env *all)
 	{
 		all->i->rot_x += 2;
 		all->i->rot_y += 2;
+	}
+	if (key == 15) // r
+	{
+		all->i->image_z = -3;
+		all->p->p_w = 0;
+		all->p->p_h = 0;
+		all->i->rot_x = 10;
+		all->i->rot_y = 10;
 	}
 }
 
