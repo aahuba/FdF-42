@@ -4,225 +4,287 @@
 #include "gnl/get_next_line.h"
 #include <stdio.h>
 #include <unistd.h>
-#include <stdlib.h>	
+#include <stdlib.h>
 #include <mlx.h>
 
-	void *mlx_ptr;
-	void *win_ptr;
+#define WIDTH 1500
+#define HEIGHT 1000
 
-typedef struct		s_point
+typedef struct	s_image
+{
+	void	*img;
+	int		bit;
+	int		size;
+	int		end;
+	int		image_z;
+	int		x_max;
+	int		y_max;
+	int		z_max;
+	int		pos_h; // image position - height
+	int		pos_w; // image position - width
+	int		rot_y; // градус поворота!
+	int		rot_x; // вот новій поворот
+	int		step;
+	char	*str;
+}				t_image;
+
+typedef struct	s_point
 {
 	char			*data;
 	struct s_point	*next;
+	int				x;
+	int				y;
+	int				color;
+	int				p_h;
+	int				p_w;
+}				t_point;
 
-	int color;
-}					t_point;
-
-typedef struct s_dot
+typedef struct	s_map
 {
-	int x, y; 
-
-}				t_dot;
-
-void	*img;
-int 	bit;
-int   	size , img_width = 1000;
-int 	end;
-char	*str;
-int x = 500 / 2;
-int y = 0;
-int i = 0;
-int temp = 0;
-int	image_hght, image_wdth = 0;
-
-const int width = 1000; //width of screen
-int height = 1000;
-int	image_height = -3;
-int step = 20;
-int	image_size = 50;
-int map_size = width / 4; // 
-int margin_x ; // смещение от левого края
-int margin_y ; // от верха
-int rot_y = 20; // вот новій поворот
-int rot_x = 20; // градус поворота ю!
-
-//dljay'a lohov
-// int x;
-	// int y;
-	int x_max;
-	int y_max;
-	int z_max;
-	int x_min;
-	int y_min;
-	int lw = 20;
-	int		i;
-	int		h;
-	int		map_height; // количкство строк карті
-	int		map_width; //количество колонок карті
 	int		fd;
+	int		map_h; // количкство строк карті
+	int		map_w; //количество колонок карті
 	t_point	*rd; //для считівания
 	t_point	*ptr; //тоже
-	char	**word; //хранит разбитую строку
-	int		**map;  // rename to object3d
-	t_dot 	**object2d;	
+	char	**line; //хранит разбитую строку
+	int		**o3d; // obj3d
+	t_point	**o2d; // obj2d
+}				t_map;
 
-void    ft_draw_line(int x0, int y0, int x1, int y1)
+typedef struct	s_window
 {
-    float t;
+	void		*mlx;
+	void		*win;
+	int			w_width;
+	int			w_height;
+}				t_window;
 
-     t = 0.;
-     while (t < 1)
-     {
-        x = x0 * (1.-t) + x1 * t;
-		y = y0 *(1.-t) + y1 * t;
-        if (x * y <= size * img_width)
-        {
-            temp = x * 4 + y * size;
-	        str[temp] = 255;
-        }
-         t += 0.0001;
-    }
+typedef struct	s_env
+{
+	t_image		*i; // image
+	t_point		*p; // point
+	t_window	*w; // window
+	t_map		*m; // map
+	int			x1;
+	int			y1;
+}				t_env;
 
+void		error(char *name, char *msg)
+{
+	if (msg == NULL)
+		msg = "Unrecognized error, mudak tupoy";
+	printf("%s: %s\n", name, msg);
+	exit(1);
 }
 
-void redraw()
+void		ft_line(t_env *all, int x0, int y0)
 {
-    mlx_clear_window(mlx_ptr, win_ptr);
-   	img = mlx_new_image(mlx_ptr, width, height);
-    str = mlx_get_data_addr(img, &bit, &size, &end);
-	// mlx_destroy_image(mlx_ptr, img);
-	int i = 0;
-	while (i < map_height)
+	float	t;
+	int		x;
+	int		y;
+	int		temp;
+
+	t = 0.;
+	if (all->p == NULL)
+		all->p = (t_point *)ft_memalloc(sizeof(t_point));
+	while (t < 1)
 	{
-		h = 0;
-		while (h < map_width)
-		{
-			y_max =(i * rot_y);
-        	x_max =(h * rot_x);
-			z_max = map[i][h] * image_height;
-		// 	        x_min += width / 2 ;
-        // y_min -= height / 8 / 2;
-        	object2d[i][h].x = x_max - (2 * y_max) + width / 2 ;
-        	object2d[i][h].y = (z_max + (1/ 2) * x_max) +  y_max + height / 4;
-
-		// dot = dot->next;
-		
-			// novoe_klassnoe_nazvanie2->x =  h * lw + margin_x;
-			// novoe_klassnoe_nazvanie2->y =  i * lw + margin_x;
-			// 			novoe_klassnoe_nazvanie2->z =  (i+h)%2;
-			// res = apply_rotation(novoe_klassnoe_nazvanie2, 0.1, 0, 0);
-			// x =  x_min;
-			// y = y_min;
-			// //ft_draw_line(14, 1, 0,  15, 150, 0);	
-			// x = h * lw + margin_x;
-			// y = i * lw + margin_x;
-			// if (i != map_height - 1)
-			// 	ft_draw_line(i , h , 0, x, y + lw, 0);
-			// if (h != map_width - 1)
-			// 	ft_draw_line(i,  h, 0, x + lw, y, 0);
-			if (i > 0)
-				ft_draw_line(object2d[i - 1][h].x , object2d[i - 1][h].y, object2d[i][h].x, object2d[i][h].y);
-			if (h > 0)
-				ft_draw_line(object2d[i][h - 1].x , object2d[i][h - 1].y , object2d[i][h].x, object2d[i][h].y);
-			h++;
-		}
-		i++;
-	}	
-	printf("bit: %i\tsize: %i\tend:%i\tstr: %s\n", bit, size, end, str);
-	mlx_put_image_to_window(mlx_ptr, win_ptr, img, image_wdth, image_hght);  
+		x = (x0 * (1. - t) + all->x1 * t) + all->p->p_w;
+		y = (y0 * (1. - t) + all->y1 * t) + all->p->p_h;
+		if (x < 0 || x >= all->w->w_width || y < 0 || y >= all->w->w_height)
+			return ;
+		temp = x * 4 + y * all->i->size;
+		all->i->str[temp] = (char)255;
+		t += 0.01;
+	}
 }
 
-int myfun(int key, void *param)
+t_image		*init_img(t_image *i, t_window *w)
 {
+	if ((i = (t_image *)ft_memalloc(sizeof(t_image))))
+	{
+		i->img = mlx_new_image(w->mlx, w->w_width, w->w_height);
+		i->rot_y = 10;
+		i->rot_x = 10;
+		i->image_z = -3;
+		i->step = 30;
+		i->str = mlx_get_data_addr(i->img, &(i->bit), &(i->size), &(i->end));
+	}
+	return (i);
+}
 
-    printf("%d\n", key);
-//	ft_putchar(&key);
-	// printf("%d > ", key);
+t_image		*ft_update_img(t_image *i, t_window *w)
+{
+	mlx_clear_window(w->mlx, w->win);
+	i->img = mlx_new_image(w->mlx, w->w_width, w->w_height);
+	i->str = mlx_get_data_addr(i->img, &(i->bit), &(i->size), &(i->end));
+	if (i == NULL)
+		error("fdf", "CHOT NE MOGU INITNUT`SA");
+	return (i);
+}
+
+void		ft_redraw(t_env *all, t_map *m, t_image *i, t_window *w)
+{
+	int		j;
+	int		h;
+
+	i = ft_update_img(i, w);
+	j = -1;
+	while (++j < m->map_h)
+	{
+		h = -1;
+		while (++h < m->map_w)
+		{
+			i->y_max = (j * i->rot_y);
+			i->x_max = (h * i->rot_x);
+			i->z_max = m->o3d[j][h] * i->image_z;
+			m->o2d[j][h].x = i->x_max - (2 * i->y_max) + w->w_width / 4;
+			m->o2d[j][h].y = (i->z_max + (1 / 2) * i->x_max)
+			+ i->y_max + w->w_height / 4;
+			all->x1 = m->o2d[j][h].x;
+			all->y1 = m->o2d[j][h].y;
+			if (j > 0)
+				ft_line(all, m->o2d[j - 1][h].x, m->o2d[j - 1][h].y);
+			if (h > 0)
+				ft_line(all, m->o2d[j][h - 1].x, m->o2d[j][h - 1].y);
+		}
+	}
+	mlx_put_image_to_window(w->mlx, w->win, i->img, i->pos_w, i->pos_h);
+}
+
+int		key_catch(int key, t_env *all)
+{
 	if (key == 53) //esc
 		exit(1);
-	if (key == 78 ||  key == 27 || key == 12) // -
-		image_height += 1;	
-	if (key == 69 || key == 24 || key == 14) // +
-		image_height -= 1;
-
-	if (key == 0 && image_wdth >= 0)				// a
-			image_wdth -= step;
-	if (key == 2 && image_wdth <= height)				// d
-			image_wdth += step;
-	if (key == 13 && image_hght >= 0)			// w
-			image_hght -= step;
-	if (key == 1 && image_hght <= width)				// s
-			image_hght += step;
-	if (key == 6 && rot_x > 0 && rot_y > 0)	// z
+	if (key == 78 || key == 27 || key == 12) // - q
+		all->i->image_z += 1;
+	if (key == 69 || key == 24 || key == 14) // + e
+		all->i->image_z -= 1;
+	if (key == 0 || key == 123) // a
+		all->p->p_w -= all->i->step;
+	if (key == 2 || key == 124) // d
+		all->p->p_w += all->i->step;
+	if (key == 13 || key == 126) // w
+		all->p->p_h -= all->i->step;
+	if (key == 1 || key == 125) // s
+		all->p->p_h += all->i->step;
+	if (key == 6 && all->i->rot_x >= 4 && all->i->rot_y >= 4) // z
 	{
-		rot_x -= 2;
-		rot_y -= 2;
+		all->i->rot_x -= 2;
+		all->i->rot_y -= 2;
 	}
-	if (key == 7 && rot_x < width / 20 && rot_y < height / 20)	// x
+	if (key == 7) // x
 	{
-		rot_x += 2;
-		rot_y += 2;
+		all->i->rot_x += 2;
+		all->i->rot_y += 2;
 	}
-	// if (key == 123)				//left arrow
-	// 		rot_x -= 2;
-	// if (key == 124)				//right arrow
-	// 		rot_x += 2;
-	// if (key == 126)			//up arrow
-	// 		rot_y -= 2;
-	// if (key == 125)				//down arrow
-	// 		rot_y += 2;
-	redraw();
+	ft_redraw(all, all->m, all->i, all->w);
 	return (0);
 }
 
-int	main(int ac, char **av)
+t_window	*start_window(t_window *w)
 {
-	if (ac != 2)
-		return (0);
-	if ((fd = open(av[1], O_RDONLY)) == -1)
-		return (0);
-	map_height = 0;
-	h = 0;
-	rd = malloc(sizeof(rd));
-	rd->next = NULL;
-	ptr = rd;
-	while (get_next_line(fd, &(rd->data)) > 0)
+	if ((w = (t_window *)ft_memalloc(sizeof(t_window))))
 	{
-		rd->next = malloc(sizeof(rd));
-		rd = rd->next;
-		rd->next = NULL;
-		map_height++;
+		w->w_height = HEIGHT;
+		w->w_width = WIDTH;
+		w->mlx = mlx_init();
+		w->win = mlx_new_window(w->mlx, w->w_width, w->w_height, "fdf 42");
 	}
-	map = malloc(sizeof(int*) * map_height);
-	object2d = malloc(sizeof(t_dot*) * map_height);
-	rd = ptr;
-	while (rd)
+	return (w);
+}
+
+t_env		*init_env(t_env *all)
+{
+	if ((all = (t_env *)ft_memalloc(sizeof(t_env))))
+	{
+		all->i = NULL;
+		all->p = NULL;
+		all->w = NULL;
+		all->m = NULL;
+	}
+	return (all);
+}
+
+t_map		*ft_count_l(t_map *m, int h)
+{
+	int		i;
+
+	m->o3d = malloc(sizeof(int *) * m->map_h * 10);
+	m->o2d = malloc(sizeof(t_point *) * m->map_h * 10);
+	m->rd = m->ptr;
+	while (m->rd)
 	{
 		i = 0;
-		word = ft_strsplit(rd->data, ' ');
-		while (word[i])
+		m->line = ft_strsplit(m->rd->data, ' ');
+		while (m->line[i])
 			i++;
-		map_width = (i == 0) ? map_width : i;
-		map[h] = malloc(sizeof(int) * map_width);
-		object2d[h] = malloc(sizeof(t_dot) * map_width);
+		m->map_w = (i == 0) ? m->map_w : i;
+		m->o3d[h] = malloc(sizeof(int) * m->map_w);
+		m->o2d[h] = malloc(sizeof(t_point) * m->map_w);
 		i = 0;
-		while (word[i])
+		while (m->line[i])
 		{
-			map[h][i] = ft_atoi(word[i]);
+			m->o3d[h][i] = ft_atoi(m->line[i]);
 			i++;
 		}
 		h++;
-		rd = rd->next;
+		m->rd = m->rd->next;
 	}
-	rd = ptr;
-	margin_x = (width - map_size) / 2;
-	margin_y = (height - map_size) / 2;
-	mlx_ptr = mlx_init();
-	win_ptr = mlx_new_window(mlx_ptr, width, height, "fdf 42");
-	redraw();
-	mlx_hook(win_ptr, 2, 1 , myfun, NULL);
-	mlx_loop(mlx_ptr);
-	return (0);
+	return (m);
 }
-		
-		
+
+t_map		*parse_file(t_map *m, char **av)
+{
+	int		h;
+
+	if ((m = (t_map *)ft_memalloc(sizeof(t_map))))
+	{
+		if ((m->fd = open(av[1], O_RDONLY)) == -1)
+			return (0);
+		m->map_h = 0;
+		h = 0;
+		m->rd = malloc(sizeof(m->rd));
+		m->rd->next = NULL;
+		m->ptr = m->rd;
+		while (get_next_line(m->fd, &(m->rd->data)) > 0)
+		{
+			m->rd->next = malloc(sizeof(m->rd));
+			m->rd = m->rd->next;
+			m->rd->next = NULL;
+			m->map_h++;
+		}
+		m = ft_count_l(m, h);
+		m->rd = m->ptr;
+	}
+	return (m);
+}
+
+void		start_env(t_env *all)
+{
+	all->w = start_window(all->w);
+	if ((all->i = init_img(all->i, all->w)) == NULL)
+		error("fdf", "DAZHE NE MOZHESH INIT IMAGE, DEBIL");
+	ft_redraw(all, all->m, all->i, all->w);
+	mlx_hook(all->w->win, 2, 0, key_catch, all);
+	mlx_loop(all->w->mlx);
+}
+
+int			main(int ac, char **av)
+{
+	t_env	*all;
+
+	all = NULL;
+	if (ac == 2)
+	{
+		if ((all = init_env(all)) == NULL)
+			error(av[0], "TVOI ENV NE PASHET VASHE");
+		if ((all->m = parse_file(all->m, av)) == NULL)
+			error(av[1], "<-Invalid map and INVALID TY");
+		start_env(all);
+		return (0);
+	}
+	else
+		printf("\n!!!USAGE SMATRI LALKA!!!\n\n");
+	return (1);
+}
