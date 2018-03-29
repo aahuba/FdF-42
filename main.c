@@ -152,7 +152,21 @@ void		ft_redraw(t_env *all, t_map *m, t_image *i, t_window *w)
 	mlx_put_image_to_window(w->mlx, w->win, i->img, i->pos_w, i->pos_h);
 }
 
-int		key_catch(int key, t_env *all)
+void	ft_key_size(int key, t_env *all)
+{
+	if (key == 6 && all->i->rot_x >= 4 && all->i->rot_y >= 4) // z
+	{
+		all->i->rot_x -= 2;
+		all->i->rot_y -= 2;
+	}
+	if (key == 7) // x
+	{
+		all->i->rot_x += 2;
+		all->i->rot_y += 2;
+	}
+}
+
+int		ft_key_catch(int key, t_env *all)
 {
 	if (key == 53) //esc
 		exit(1);
@@ -168,16 +182,7 @@ int		key_catch(int key, t_env *all)
 		all->p->p_h -= all->i->step;
 	if (key == 1 || key == 125) // s
 		all->p->p_h += all->i->step;
-	if (key == 6 && all->i->rot_x >= 4 && all->i->rot_y >= 4) // z
-	{
-		all->i->rot_x -= 2;
-		all->i->rot_y -= 2;
-	}
-	if (key == 7) // x
-	{
-		all->i->rot_x += 2;
-		all->i->rot_y += 2;
-	}
+	ft_key_size(key, all);
 	ft_redraw(all, all->m, all->i, all->w);
 	return (0);
 }
@@ -266,7 +271,7 @@ void		start_env(t_env *all)
 	if ((all->i = init_img(all->i, all->w)) == NULL)
 		error("fdf", "DAZHE NE MOZHESH INIT IMAGE, DEBIL");
 	ft_redraw(all, all->m, all->i, all->w);
-	mlx_hook(all->w->win, 2, 0, key_catch, all);
+	mlx_hook(all->w->win, 2, 0, ft_key_catch, all);
 	mlx_loop(all->w->mlx);
 }
 
